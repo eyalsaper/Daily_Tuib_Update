@@ -132,6 +132,28 @@ export function EmployeeCard() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* Pick an employee directly; stepping through sixteen of them to
+                reach one is not navigation. */}
+            <select
+              value={ui.mgrEmp}
+              onChange={(e) => ui.setMgrEmp(e.target.value)}
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: C.ink,
+                border: `1px solid ${C.borderStrong}`,
+                borderRadius: 999,
+                padding: '8px 16px',
+                background: '#fff',
+                maxWidth: 220,
+              }}
+            >
+              {db.employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() =>

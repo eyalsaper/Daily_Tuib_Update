@@ -215,6 +215,20 @@ export function MgmtReport() {
               </button>
             ))}
           </div>
+          {range.range !== 'custom' && (
+            <input
+              type="date"
+              value={range.anchor}
+              onChange={(e) => e.target.value && ui.setRange(range.range, e.target.value)}
+              style={{
+                fontSize: 12.5,
+                border: `1px solid ${C.borderStrong}`,
+                borderRadius: 999,
+                padding: '6px 12px',
+                background: '#fff',
+              }}
+            />
+          )}
           <button type="button" onClick={() => ui.step(-1)} style={{ fontSize: 12.5, color: C.muted }}>
             → קודם
           </button>

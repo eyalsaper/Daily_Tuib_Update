@@ -60,6 +60,21 @@ export function RangeBar({
         })}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {/* Jump straight to a date instead of stepping one period at a time.
+            In week and month mode the picked date selects the period it falls in. */}
+        {ui.range !== 'custom' && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: C.muted }}>
+              {ui.range === 'day' ? 'תאריך' : ui.range === 'week' ? 'שבוע של' : 'חודש של'}
+            </span>
+            <input
+              type="date"
+              value={ui.anchor}
+              onChange={(e) => e.target.value && ui.setRange(ui.range, e.target.value)}
+              style={dateInput}
+            />
+          </span>
+        )}
         {ui.range === 'custom' && (
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input

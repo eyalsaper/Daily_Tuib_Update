@@ -22,6 +22,7 @@ export function CallsChart({
         style={{
           display: 'flex',
           alignItems: 'flex-end',
+          justifyContent: 'flex-start',
           gap: 10,
           height,
           marginTop: 18,
@@ -31,7 +32,17 @@ export function CallsChart({
         {bars.map((b, i) => (
           <span
             key={i}
-            style={{ flex: 1, height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 2 }}
+            // Capped width: with a single day in range an uncapped flex child
+            // stretches into a full-width slab that reads as a broken chart.
+            style={{
+              flex: '1 1 0',
+              maxWidth: 64,
+              height: '100%',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 2,
+            }}
           >
             <span
               style={{
@@ -55,14 +66,17 @@ export function CallsChart({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-start',
+          gap: 10,
           marginTop: 8,
           fontSize: 11.5,
           color: C.muted,
         }}
       >
         {bars.map((b, i) => (
-          <span key={i}>{b.label}</span>
+          <span key={i} style={{ flex: '1 1 0', maxWidth: 64, textAlign: 'center' }}>
+            {b.label}
+          </span>
         ))}
       </div>
     </>
