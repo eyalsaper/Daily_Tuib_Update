@@ -87,9 +87,9 @@ export function DailyReport() {
   const reportOn = (date: string) =>
     db.reports.find((r) => r.userId === userId && r.date === date && (r.hours || r.calls)) || null;
 
-  const [form, setForm] = useState<Form>(() => blankForm(db.tasks, yesterday(), 'new', null));
+  const [form, setForm] = useState<Form>(() => blankForm(db.tasks, today(), 'new', null));
   const [modalDate, setModalDate] = useState<string | null>(() =>
-    reportOn(yesterday()) ? yesterday() : null,
+    reportOn(today()) ? today() : null,
   );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -339,6 +339,7 @@ export function DailyReport() {
               >
                 {fmtFull(form.date)}
               </span>
+              {form.date === today() && <Badge>היום</Badge>}
               {form.date === yesterday() && <Badge>אתמול</Badge>}
               {form.mode === 'edit' && (
                 <Badge color="#fff" bg={C.ink2}>
@@ -368,7 +369,7 @@ export function DailyReport() {
           </div>
           <span style={{ width: 1, height: 38, background: C.border }} />
           <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6, maxWidth: 250 }}>
-            ברירת המחדל היא אתמול. אפשר להחליף ליום אחר, כולל תאריכים מהעבר.
+            ברירת המחדל היא היום. אפשר להחליף ליום אחר, כולל תאריכים מהעבר.
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>

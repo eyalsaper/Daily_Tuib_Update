@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { C } from '@/ui/tokens';
 import { Card, Empty } from '@/ui/primitives';
 import { CallsChart, ChartLegend, MoodScale, Sparkline } from '@/ui/Charts';
@@ -8,7 +8,7 @@ import { useUi, useRangeState } from '@/state/ui';
 import { useAuth } from '@/auth/AuthContext';
 import { aggregate, barsFor, expectedFor, qtyOf, resetStats, targetsFor } from '@/domain/calc';
 import { inRange, rangeLabel, unitLabel } from '@/domain/range';
-import { fmtFull } from '@/lib/date';
+import { fmtFull, yesterday } from '@/lib/date';
 import { r1, signed } from '@/lib/num';
 
 /**
@@ -18,10 +18,21 @@ import { r1, signed } from '@/lib/num';
  */
 export function MyData() {
   const db = useDb();
+  // Opens on yesterday's single-day view: an employee coming here wants to see
+  // the shift they just reported, not a weekly average. Only on the first
+  // visit — after that the range the employee picked is respected.
+  const seeded = useRef(false);
   const ui = useUi();
   const range = useRangeState();
+
   const { user } = useAuth();
   const userId = user?.id || '';
+
+  useEffect(() => {
+    if (seeded.current) return;
+    seeded.current = true;
+    ui.setRange('day', yesterday());
+  }, [ui]);
 
   const mine = useMemo(
     () =>
