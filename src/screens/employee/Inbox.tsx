@@ -292,6 +292,10 @@ export function Inbox() {
                           onlyMgr: !!onlyMgr[m.id],
                         });
                         setDrafts((d) => ({ ...d, [m.id]: '' }));
+                        // Reset the flag too: "manager only" is a choice about
+                        // one reply, and leaving it set silently makes the next
+                        // one private as well.
+                        setOnlyMgr((o) => ({ ...o, [m.id]: false }));
                         ui.flash('התגובה נשלחה.');
                       }}
                       style={{
