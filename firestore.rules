@@ -1,0 +1,158 @@
+rules_version = '2';
+
+// Security rules for the "סיכום יום" data.
+//
+// IMPORTANT — deploy order:
+//   These rules assume every client is signed in with Firebase Authentication
+//   and carries two custom claims:
+//       role   : 'manager' | 'employee'
+//       empId  : the id of the matching users/{empId} profile document
+//   `scripts/migrate-auth.mjs` creates the accounts and sets both claims.
+//
+//   While the app still runs with VITE_AUTH_MODE=legacy it is NOT authenticated
+//   at all, and deploying these rules will lock it out. Migrate accounts first,
+//   switch the app to VITE_AUTH_MODE=firebase, verify sign-in, and only then
+//   run `firebase deploy --only firestore:rules`.
+//
+//   The legacy single-file app (midrag-app-legacy.html) is also unauthenticated
+//   and will stop working when these rules go live. Retire it in the same step.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return signedIn() ? request.auth.token.role : '';
+    }
+
+    function isManager() {
+      return role() == 'manager';
+    }
+
+    function myEmpId() {
+      return signedIn() ? request.auth.token.empId : '';
+    }
+
+    match /artifacts/{appId}/public/data {
+
+      // ---------------------------------------------------------------- users
+      // Profiles carry the legacy `pass` hash, so they are never world-readable.
+      // Employees may read the roster (names for replies); only a manager writes.
+      match /users/{userId} {
+        allow read: if signedIn();
+        allow create, update: if isManager();
+        allow delete: if isManager();
+      }
+
+      // -------------------------------------------------------------- reports
+      // An employee reads and writes only their own reports.
+      match /reports/{reportId} {
+        allow read: if isManager() || resource.data.userId == myEmpId();
+        allow create: if isManager() || request.resource.data.userId == myEmpId();
+        allow update: if isManager() || (
+          resource.data.userId == myEmpId() &&
+          request.resource.data.userId == myEmpId()
+        );
+        allow delete: if isManager() || resource.data.userId == myEmpId();
+      }
+
+      // ---------------------------------------------------------------- ideas
+      // Anonymous ideas store authorId == 'anonymous', so the author cannot be
+      // recovered from the document. Only the manager reads the whole list.
+      match /ideas/{ideaId} {
+        allow read: if isManager() || resource.data.authorId == myEmpId();
+        allow create: if signedIn() && (
+          request.resource.data.authorId == myEmpId() ||
+          request.resource.data.authorId == 'anonymous'
+        );
+        // Replies and the "implemented" flag are the manager's to set.
+        allow update: if isManager();
+        allow delete: if isManager();
+      }
+
+      // ------------------------------------------------------------ feedbacks
+      // One collection holding: manager notes (userId == an employee),
+      // team broadcasts (userId == 'all') and replies (type == 'reply').
+      //
+      // A reply flagged onlyMgr is readable by the manager and its author only —
+      // this is the rule the UI relies on and it is enforced here, not there.
+      match /feedbacks/{docId} {
+        allow read: if isManager()
+          || (resource.data.type == 'reply' && (
+                resource.data.get('onlyMgr', false) == false ||
+                resource.data.authorId == myEmpId()
+              ))
+          || resource.data.userId == myEmpId()
+          || resource.data.userId == 'all';
+
+        // Employees may only post replies, and only as themselves.
+        allow create: if isManager() || (
+          signedIn() &&
+          request.resource.data.type == 'reply' &&
+          request.resource.data.authorId == myEmpId()
+        );
+        allow update, delete: if isManager();
+      }
+
+      // ------------------------------------------------------- configuration
+      match /task_schemas/{docId} {
+        allow read: if signedIn();
+        allow write: if isManager();
+      }
+
+      match /team_configs/{docId} {
+        allow read: if signedIn();
+        allow write: if isManager();
+      }
+
+      match /employee_targets/{docId} {
+        allow read: if signedIn();
+        allow write: if isManager();
+      }
+
+      match /teams/{docId} {
+        allow read: if signedIn();
+        allow write: if isManager();
+      }
+
+      // ----------------------------------------------------------- read marks
+      // Read state is personal: you may only write your own marks.
+      match /read_marks/{markId} {
+        allow read: if signedIn();
+        allow create, update: if signedIn() && request.resource.data.userId == myEmpId();
+        allow delete: if signedIn() && resource.data.userId == myEmpId();
+      }
+
+      // -------------------------------------------------- manager-only data
+      // Manual counts, the manager's range summaries and the legacy manual
+      // output documents are never shown to employees.
+      match /manual_counts/{docId} {
+        allow read, write: if isManager();
+      }
+
+      match /dashboard_checks/{docId} {
+        allow read, write: if isManager();
+      }
+
+      match /monthly_outputs/{docId} {
+        allow read, write: if isManager();
+      }
+
+      match /weekly_outputs/{docId} {
+        allow read, write: if isManager();
+      }
+
+      match /nr_dismissed/{docId} {
+        allow read, write: if isManager();
+      }
+
+      // Anything not named above is denied.
+      match /{other=**} {
+        allow read, write: if false;
+      }
+    }
+  }
+}

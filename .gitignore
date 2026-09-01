@@ -1,0 +1,23 @@
+node_modules/
+dist/
+dist-ssr/
+.env
+.env.local
+.env.*.local
+*.local
+serviceAccountKey.json
+*-service-account*.json
+.firebase/
+.firebaserc
+firebase-debug.log*
+firestore-debug.log*
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
+
+# Design handoff bundle — kept locally as reference only.
+# It embeds the live Firebase configuration and the legacy app; see docs/BACKEND.md
+# for the field names, which is all the repo needs.
+docs/handoff/

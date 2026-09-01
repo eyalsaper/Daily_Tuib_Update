@@ -1,0 +1,61 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  font-family: Heebo, system-ui, sans-serif;
+  background: #f7f6f8;
+  color: #231f29;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #bd1854;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #8e0f3e;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+  outline: 2px solid #bd1854;
+  outline-offset: 1px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+::placeholder {
+  color: #8e8896;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
