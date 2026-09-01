@@ -515,6 +515,7 @@ export interface LegacyTargets {
   resetPct?: number | null;
   /** Written by this app: the hourly targets exactly as the new model holds them. */
   hourly?: HourlyTargets;
+  /** Written by an earlier build; no longer produced. */
   callsPerHour?: number;
 }
 
@@ -537,18 +538,21 @@ export function targetsFromLegacy(d: LegacyTargets | undefined): HourlyTargets |
   return null;
 }
 
-/** Keeps the legacy `tasks` rate map in sync with the new `hourly` block. */
+/**
+ * Saves the hourly targets as the `hourly` block, leaving every legacy field
+ * exactly as it was.
+ *
+ * The legacy `tasks` rate map is deliberately NOT mirrored into. Its numbers
+ * are not per working hour (the live team default carries פטל: 50) and the old
+ * app still reads them, so writing per-hour values there would quietly destroy
+ * figures this app never even uses.
+ */
 export function targetsToLegacy(values: HourlyTargets, existing?: LegacyTargets): LegacyTargets {
-  const tasks = { ...(existing?.tasks || {}) };
-  tasks['פטל'] = values.patel;
-  tasks['בוט'] = values.bot;
-  tasks['משימות צוותים'] = values.teams;
   return {
     ...existing,
-    tasks,
+    tasks: existing?.tasks || {},
     manual: existing?.manual || {},
     resetPct: existing?.resetPct ?? null,
-    callsPerHour: values.calls,
     hourly: values,
   };
 }
