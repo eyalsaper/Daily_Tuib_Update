@@ -212,7 +212,7 @@ export function TasksAndTargets() {
             <span style={{ width: 150, fontSize: 12.5, lineHeight: 1.5 }}>
               {t.targetType === 'perHour'
                 ? (t.teamWeekly ? `צוותי ${t.teamWeekly}/שבוע · ` : '') +
-                  `${db.targets.team[t.id] ?? t.perHour} לשעה`
+                  `${rateFor(db, 'team', t)} לשעה`
                 : t.targetType === 'team'
                   ? 'צוותי'
                   : t.targetType === 'personal'
@@ -699,6 +699,21 @@ export function TasksAndTargets() {
                 />
               </div>
             )}
+            {/* The weekly team goal the overview measures the team against.
+                Blank means the task has no team goal at all. */}
+            <div style={{ width: 150 }}>
+              <div style={{ fontSize: 11.5, color: C.muted }}>יעד צוותי לשבוע</div>
+              <input
+                type="number"
+                min="0"
+                placeholder="ללא"
+                value={sel.teamWeekly ?? ''}
+                onChange={(e) =>
+                  upd({ teamWeekly: e.target.value === '' ? undefined : num(e.target.value) })
+                }
+                style={bigInput}
+              />
+            </div>
             <div style={{ width: 150 }}>
               <div style={{ fontSize: 11.5, color: C.muted }}>
                 משקל בצפי · {sel.nums.length ? 'שיחות לכל יחידה' : 'שיחות לכל שעה'}

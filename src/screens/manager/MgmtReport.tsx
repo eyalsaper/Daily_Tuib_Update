@@ -3,7 +3,7 @@ import { C } from '@/ui/tokens';
 import { Card, Pill, Toggle } from '@/ui/primitives';
 import { useDb } from '@/state/store';
 import { useUi, useRangeState } from '@/state/ui';
-import { aggregate, manualFor, targetsFor } from '@/domain/calc';
+import { aggregate, manualFor, rateFor } from '@/domain/calc';
 import { inRange, rangeBounds, rangeLabel, type RangeKind } from '@/domain/range';
 import { daysBetween } from '@/lib/date';
 import { num } from '@/lib/num';
@@ -41,11 +41,13 @@ export function MgmtReport() {
   );
   const agg = aggregate(db.tasks, reps);
   const days = daysBetween(b.from, b.to);
+  const patelTask = db.tasks.find((t) => t.id === 'patel');
+  const patelRate = patelTask ? rateFor(db, repEmp, patelTask) : 0;
 
   // In per-employee scope the פטל goal comes from THEIR hours and THEIR rate.
   const patelGoal = perEmpMode
-    ? Math.round(agg.hours * (targetsFor(db, repEmp).values.patel || 4))
-    : Math.round(((db.tasks.find((t) => t.id === 'patel')?.teamWeekly || 275) * days) / 7);
+    ? Math.round(agg.hours * patelRate)
+    : Math.round(((patelTask?.teamWeekly || 0) * days) / 7);
 
   const perTask = db.tasks
     .filter((t) => t.active)

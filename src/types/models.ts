@@ -80,12 +80,13 @@ export interface Employee {
   authUid?: string;
 }
 
+/**
+ * Per-hour targets, keyed by task id. These are OVERRIDES only: a task with no
+ * entry here uses the rate set on the task itself, so the task configuration
+ * stays the single source of truth.
+ */
 export interface HourlyTargets {
-  patel: number;
-  bot: number;
-  calls: number;
-  teams: number;
-  [key: string]: number;
+  [taskId: string]: number;
 }
 
 export interface TargetsConfig {

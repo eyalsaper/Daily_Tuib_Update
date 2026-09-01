@@ -536,7 +536,8 @@ export interface LegacyTargets {
 
 export const TARGETS_DEFAULT_KEY = 'team_default';
 
-export const DEFAULT_TEAM_TARGETS: HourlyTargets = { patel: 4, bot: 3, calls: 11, teams: 2 };
+/** No seeded rates: an unset task falls back to its own `perHour`, not to a constant. */
+export const DEFAULT_TEAM_TARGETS: HourlyTargets = {};
 
 /**
  * Hourly targets.

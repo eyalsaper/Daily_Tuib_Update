@@ -36,7 +36,8 @@ export function Overview() {
 
   const patelTask = db.tasks.find((t) => t.id === 'patel');
   const days = daysBetween(b.from, b.to);
-  const patelGoal = Math.round(((patelTask?.teamWeekly || 275) * days) / 7);
+  // Blank team goal on the task means there is no team goal to measure against.
+  const patelGoal = Math.round(((patelTask?.teamWeekly || 0) * days) / 7);
   const patelPct = patelGoal ? Math.round((agg.patel / patelGoal) * 100) : 0;
 
   const unreset = unresetRows(db, reps);
@@ -194,18 +195,22 @@ export function Overview() {
             }}
           >
             <div>
-              <div style={{ fontSize: 13, color: C.muted }}>פטל · יעד צוותי {patelGoal}</div>
+              <div style={{ fontSize: 13, color: C.muted }}>
+                {patelGoal ? `פטל · יעד צוותי ${patelGoal}` : 'פטל · ללא יעד צוותי'}
+              </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 4 }}>
                 <span
                   style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-.03em', lineHeight: 1 }}
                 >
                   {agg.patel}
                 </span>
-                <span
-                  style={{ fontSize: 13, fontWeight: 700, color: patelPct >= 100 ? C.success : C.brand }}
-                >
-                  {patelPct}%
-                </span>
+                {!!patelGoal && (
+                  <span
+                    style={{ fontSize: 13, fontWeight: 700, color: patelPct >= 100 ? C.success : C.brand }}
+                  >
+                    {patelPct}%
+                  </span>
+                )}
               </div>
             </div>
             <div style={{ width: 200 }}>
