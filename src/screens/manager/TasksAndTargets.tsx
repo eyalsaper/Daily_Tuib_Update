@@ -41,8 +41,12 @@ export function TasksAndTargets() {
     setDirty(true);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(async () => {
-      await saveTasks(next);
-      setDirty(false);
+      try {
+        await saveTasks(next);
+        setDirty(false);
+      } catch (e) {
+        ui.flash(`שמירת המשימות נכשלה: ${(e as Error)?.message || 'שגיאה'}`);
+      }
     }, 600);
   }
 
@@ -753,9 +757,13 @@ export function TasksAndTargets() {
                 type="button"
                 onClick={async () => {
                   window.clearTimeout(timer.current);
-                  await saveTasks(tasks);
-                  setDirty(false);
-                  ui.flash('המשימה נשמרה.');
+                  try {
+                    await saveTasks(tasks);
+                    setDirty(false);
+                    ui.flash('המשימה נשמרה.');
+                  } catch (e) {
+                    ui.flash(`שמירת המשימה נכשלה: ${(e as Error)?.message || 'שגיאה'}`);
+                  }
                 }}
                 style={{
                   fontSize: 13,

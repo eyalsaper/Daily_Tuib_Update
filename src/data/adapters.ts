@@ -126,6 +126,21 @@ function normaliseTask(t: Task): Task {
   };
 }
 
+/**
+ * Firestore rejects `undefined` outright, and a task with no target carries
+ * `perHour: undefined` / `teamWeekly: undefined`. Writing the list unfiltered
+ * throws, which is how task configuration silently failed to save at all.
+ */
+export function tasksForStorage(tasks: Task[]): Task[] {
+  return tasks.map((t) => {
+    const out = { ...normaliseTask(t) } as Record<string, unknown>;
+    Object.keys(out).forEach((k) => {
+      if (out[k] === undefined) delete out[k];
+    });
+    return out as unknown as Task;
+  });
+}
+
 /** The legacy schema map, regenerated from the new task list. */
 export function tasksToLegacySchemas(
   tasks: Task[],

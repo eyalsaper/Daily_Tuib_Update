@@ -33,6 +33,7 @@ import {
   TARGETS_DEFAULT_KEY,
   reportToLegacy,
   targetsToLegacy,
+  tasksForStorage,
   tasksToLegacySchemas,
 } from './adapters';
 import { toLegacyDate, today } from '@/lib/date';
@@ -233,12 +234,17 @@ export async function setLegacyItemRead(itemId: string, userId: string, read: bo
 export async function saveTasks(tasks: Task[]) {
   const schemasSnap = await getDoc(docRef('task_schemas', 'global'));
   const existing = (schemasSnap.exists() ? schemasSnap.data() : {}) as Record<string, LegacySchema>;
-  await setDoc(docRef('task_schemas', 'global'), tasksToLegacySchemas(tasks, existing));
+  // team_configs first: it is this app's source of truth. If it fails, the two
+  // documents must not be left describing different task lists.
   await setDoc(
     docRef('team_configs', TEAM),
-    { tasks: tasks.filter((t) => t.active).map((t) => t.name), tasksV2: tasks },
+    {
+      tasks: tasks.filter((t) => t.active).map((t) => t.name),
+      tasksV2: tasksForStorage(tasks),
+    },
     { merge: true },
   );
+  await setDoc(docRef('task_schemas', 'global'), tasksToLegacySchemas(tasks, existing));
 }
 
 /* ---------------------------------------------------------------- targets */
