@@ -7,7 +7,7 @@ import { useAuth } from '@/auth/AuthContext';
 import type { Report, Task, TaskEntry } from '@/types/models';
 import { fmtFull, today, yesterday } from '@/lib/date';
 import { num, r1 } from '@/lib/num';
-import { hourlyTargetTasks, moodWord, rateFor } from '@/domain/calc';
+import { expectedFor, hourlyTargetTasks, moodWord, rateFor } from '@/domain/calc';
 import { createReport, replaceReport, saveIdea, setIdeaReply } from '@/data/repo';
 import { setDoc } from 'firebase/firestore';
 import { docRef, uid } from '@/lib/firebase';
@@ -127,16 +127,22 @@ export function DailyReport() {
     setError(null);
   };
 
+  // Run the form through the same expected-calls function every other screen
+  // uses, so the figure here can never drift from the one the manager reads.
   const expected = useMemo(() => {
-    let x = 0;
+    const entries: Record<string, TaskEntry> = {};
     Object.keys(form.tasks).forEach((tid) => {
-      const t = db.tasks.find((y) => y.id === tid);
       const e = form.tasks[tid];
-      if (!t || !e?.on) return;
-      if (t.nums.length) x += num(e.nums[0]) * t.weight;
-      else x += (t.timeMode === 'windows' ? 2 : num(e.time)) * t.weight;
+      if (!e?.on) return;
+      entries[tid] = {
+        on: true,
+        nums: {},
+        resets: {},
+        time: num(e.time),
+        note: '',
+      };
     });
-    return Math.round(x);
+    return expectedFor(db.tasks, { tasks: entries });
   }, [form.tasks, db.tasks]);
 
   const onCount = Object.keys(form.tasks).filter((k) => form.tasks[k].on).length;

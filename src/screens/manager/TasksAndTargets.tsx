@@ -227,7 +227,7 @@ export function TasksAndTargets() {
                     : 'ללא יעד'}
             </span>
             <span style={{ width: 104, fontSize: 12.5, color: C.muted }}>
-              {t.weight} {t.nums.length ? 'לכל יחידה' : 'לשעה'}
+              {t.weight} לשעה
             </span>
             <span style={{ width: 56 }}>
               <Toggle
@@ -723,7 +723,7 @@ export function TasksAndTargets() {
             </div>
             <div style={{ width: 150 }}>
               <div style={{ fontSize: 11.5, color: C.muted }}>
-                משקל בצפי · {sel.nums.length ? 'שיחות לכל יחידה' : 'שיחות לכל שעה'}
+                משקל בצפי · שיחות לשעה
               </div>
               <input
                 type="number"

@@ -123,13 +123,14 @@ src/
 The one calculation everything else leans on, in `src/domain/calc.ts`:
 
 ```
-expected = Σ over reported tasks:
-  task has numeric questions ? quantity[0] * weight : hoursSpent * weight
+expected = Σ over reported tasks: hoursSpent * weight
 ```
 
-Window-based tasks always count as 2 hours. Both roles and the management report
-read this same module, so the numbers can never disagree between screens. It is
-a modelling estimate and is never presented as an authoritative target.
+A weight is always calls per HOUR of the task; there is no per-unit weight, and
+the quantity reported never enters the calculation. Window-based tasks count as
+2 hours. Both roles and the management report read this same module, so the
+numbers can never disagree between screens. It is a modelling estimate and is
+never presented as an authoritative target.
 
 ### Tasks
 

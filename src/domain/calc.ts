@@ -17,8 +17,11 @@ export function entryHours(task: Task, time: unknown): number {
 }
 
 /**
- * expected = Σ over reported tasks:
- *   task has numeric questions ? quantity[0] * weight : hoursSpent * weight
+ * expected = Σ over reported tasks: hoursSpent * weight
+ *
+ * A weight is always calls per HOUR of the task — there is no per-unit weight.
+ * The quantity an employee reports (how much פטל, how much בוט) never enters
+ * this: an hour of a task is worth the same whatever came out of it.
  */
 export function expectedFor(tasks: Task[], rep: Pick<Report, 'tasks'>): number {
   let x = 0;
@@ -27,8 +30,7 @@ export function expectedFor(tasks: Task[], rep: Pick<Report, 'tasks'>): number {
     const t = findTask(tasks, tid);
     const e = entries[tid];
     if (!t || !e || !e.on) return;
-    if (t.nums.length) x += num(e.nums[0]) * t.weight;
-    else x += entryHours(t, e.time) * t.weight;
+    x += entryHours(t, e.time) * t.weight;
   });
   return Math.round(x);
 }
