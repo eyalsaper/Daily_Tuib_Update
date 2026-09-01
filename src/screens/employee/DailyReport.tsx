@@ -162,6 +162,12 @@ export function DailyReport() {
   const botGoal = Math.round(num(form.tasks.bot?.time) * targets.bot);
 
   function pickDate(date: string) {
+    // `max` on the input only constrains the picker — a typed date sails past
+    // it, and a report filed for next month poisons every range it lands in.
+    if (!date || date > today()) {
+      setError('אפשר לדווח על היום או על תאריך מהעבר, לא על תאריך עתידי.');
+      return;
+    }
     const existing = reportOn(date);
     setForm((f) => ({ ...f, date, mode: 'new' }));
     setModalDate(existing ? date : null);
@@ -216,6 +222,10 @@ export function DailyReport() {
 
     setBusy(true);
     try {
+      // What the record looks like after this write, so the form can be rebuilt
+      // from it directly — the Firestore snapshot has not arrived yet, and
+      // reading db here would redisplay the pre-submit values.
+      let saved: Report = base;
       if (form.mode === 'append' && existing) {
         // Quantities, hours and calls are summed; resets are OR-ed; texts are
         // concatenated with ' · '; the new mood rating replaces the old one.
@@ -255,15 +265,17 @@ export function DailyReport() {
         });
         await replaceReport(existing.id, merged, db.tasks, user.name);
         await persistIdea(merged, existing);
+        saved = merged;
       } else if (existing) {
         await replaceReport(existing.id, base, db.tasks, user.name);
         await persistIdea(base, existing);
       } else {
         const docId = await createReport(base, db.tasks, user.name);
         await persistIdea({ ...base, id: docId }, null);
+        saved = { ...base, id: docId };
       }
       ui.flash(form.mode === 'append' ? 'הנתונים נוספו לדיווח של אותו יום.' : 'הדיווח נשמר. תודה!');
-      setForm(blankForm(db.tasks, form.date, 'edit', reportOn(form.date) || base));
+      setForm(blankForm(db.tasks, form.date, 'edit', saved));
     } catch (e) {
       setError('שמירת הדיווח נכשלה: ' + ((e as Error)?.message || 'שגיאה'));
     } finally {

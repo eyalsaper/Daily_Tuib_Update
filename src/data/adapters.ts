@@ -194,6 +194,8 @@ export interface LegacyReport {
   hoursExplanation?: string;
   tasks?: LegacyTaskEntry[];
   ventingText?: string;
+  /** Added by this app: when the form was actually submitted. */
+  submittedAt?: string;
 }
 
 /**
@@ -314,7 +316,12 @@ export function reportToLegacy(rep: Report, tasks: Task[], employeeName: string)
     employeeName,
     dateString: toLegacyDate(rep.date),
     date: rep.date,
-    timestamp: rep.timestamp,
+    // `timestamp` is what every range query — this app's and the legacy app's —
+    // filters on, so it has to describe the day being REPORTED, not the moment
+    // the form was submitted. Backdating a report otherwise files it under the
+    // week it was typed in. The submission time is kept separately.
+    timestamp: rep.date + 'T12:00:00.000Z',
+    submittedAt: rep.timestamp,
     mood: rep.mood,
     moodScale: 10,
     workLocation: rep.place,
