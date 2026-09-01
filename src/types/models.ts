@@ -111,6 +111,8 @@ export interface MessageReply {
   text: string;
   /** When true only the manager and the author may see this reply. */
   onlyMgr: boolean;
+  /** 'YYYY-MM-DD' — used to age a reply out of the unread count. */
+  date?: string;
   /** Firestore id of the backing `feedbacks` document. */
   docId?: string;
 }

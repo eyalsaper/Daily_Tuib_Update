@@ -591,7 +591,8 @@ export function DailyReport() {
                     <div style={{ display: 'flex', gap: 16, marginTop: 14, alignItems: 'flex-end' }}>
                       {t.time && t.timeMode === 'hours' && (
                         <div style={{ width: 120 }}>
-                          <div style={{ fontSize: 12, color: C.muted }}>זמן במשימה</div>
+                          {/* Explicit unit: the old form asked for minutes. */}
+                          <div style={{ fontSize: 12, color: C.muted }}>זמן במשימה (שעות)</div>
                           <input
                             type="number"
                             step="0.5"

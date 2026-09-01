@@ -480,6 +480,7 @@ export function splitFeedbacks(
           by: r.authorId || '',
           text: r.replyText || '',
           onlyMgr: !!r.onlyMgr,
+          date: fbDate(r),
           docId: r.docId,
         })),
     }))

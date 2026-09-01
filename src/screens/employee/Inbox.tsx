@@ -4,7 +4,7 @@ import { Avatar, Card, Checkbox, Empty } from '@/ui/primitives';
 import { useDb } from '@/state/store';
 import { useUi } from '@/state/ui';
 import { useAuth } from '@/auth/AuthContext';
-import { isRead } from '@/domain/unread';
+import { isStale, isUnread } from '@/domain/unread';
 import { fmtFull } from '@/lib/date';
 import { initials } from '@/lib/num';
 import { replyToMessage, setLegacyItemRead, setReadMark, setReadMarks } from '@/data/repo';
@@ -24,12 +24,12 @@ export function Inbox() {
 
   const allNotes = db.notes.filter((n) => n.to === userId);
   const allMsgs = db.messages;
-  const unreadNotes = allNotes.filter((n) => !n.read).length;
-  const unreadMsgs = allMsgs.filter((m) => !isRead(db, 'messages', m.id)).length;
+  const unreadNotes = allNotes.filter((n) => !n.read && !isStale(n.date)).length;
+  const unreadMsgs = allMsgs.filter((m) => isUnread(db, 'messages', m.id, m.date)).length;
 
-  const notes = allNotes.filter((n) => !unreadOnly || !n.read).slice().reverse();
+  const notes = allNotes.filter((n) => !unreadOnly || (!n.read && !isStale(n.date))).slice().reverse();
   const messages = allMsgs
-    .filter((m) => !unreadOnly || !isRead(db, 'messages', m.id))
+    .filter((m) => !unreadOnly || isUnread(db, 'messages', m.id, m.date))
     .slice()
     .reverse();
 
@@ -93,13 +93,15 @@ export function Inbox() {
             </div>
           </div>
           {!notes.length && <Empty text="אין הערות חדשות. אפשר להציג הכל מלמעלה." />}
-          {notes.map((n) => (
+          {notes.map((n) => {
+            const noteUnread = !n.read && !isStale(n.date);
+            return (
             <div key={n.id} style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}` }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <Avatar name={db.manager.name} size={28} bg={C.brandTint} color={C.brand} />
                   <span style={{ fontSize: 13.5, fontWeight: 600 }}>{db.manager.name}</span>
-                  {!n.read && (
+                  {noteUnread && (
                     <span style={{ fontSize: 11.5, color: C.brand, fontWeight: 700 }}>חדש</span>
                   )}
                 </div>
@@ -122,7 +124,7 @@ export function Inbox() {
                 </div>
               )}
               <p style={{ margin: '12px 0 0', fontSize: 14.5, lineHeight: 1.75 }}>{n.text}</p>
-              {!n.read && (
+              {noteUnread && (
                 <button
                   type="button"
                   onClick={() => void setLegacyItemRead(n.id, userId, true)}
@@ -139,7 +141,8 @@ export function Inbox() {
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
         </Card>
 
         <Card style={{ flex: 1 }}>
@@ -151,7 +154,7 @@ export function Inbox() {
           </div>
           {!messages.length && <Empty text="אין הודעות חדשות. אפשר להציג הכל מלמעלה." />}
           {messages.map((m) => {
-            const unread = !isRead(db, 'messages', m.id);
+            const unread = isUnread(db, 'messages', m.id, m.date);
             // A reply flagged onlyMgr is visible to the manager and its author only.
             const visible = m.replies.filter((rp) => !rp.onlyMgr || rp.by === userId);
             return (

@@ -4,7 +4,7 @@ import { Card, Checkbox, Empty } from '@/ui/primitives';
 import { useDb } from '@/state/store';
 import { useUi } from '@/state/ui';
 import { useAuth } from '@/auth/AuthContext';
-import { isRead } from '@/domain/unread';
+import { isUnread } from '@/domain/unread';
 import { fmtFull } from '@/lib/date';
 import { initials } from '@/lib/num';
 import { deleteTeamMessage, publishTeamMessage, setReadMarks } from '@/data/repo';
@@ -23,12 +23,12 @@ export function TeamBoard() {
   const [unreadOnly, setUnreadOnly] = useState(true);
 
   const unreadReplies = db.messages.reduce(
-    (a, m) => a + m.replies.filter((_r, i) => !isRead(db, 'replies', m.id + ':' + i)).length,
+    (a, m) => a + m.replies.filter((rp, i) => isUnread(db, 'replies', m.id + ':' + i, rp.date || m.date)).length,
     0,
   );
 
   const messages = db.messages
-    .filter((m) => !unreadOnly || m.replies.some((_r, i) => !isRead(db, 'replies', m.id + ':' + i)))
+    .filter((m) => !unreadOnly || m.replies.some((rp, i) => isUnread(db, 'replies', m.id + ':' + i, rp.date || m.date)))
     .slice()
     .reverse();
 
@@ -132,7 +132,7 @@ export function TeamBoard() {
               onClick={async () => {
                 await setReadMarks(
                   db.messages.flatMap((m) =>
-                    m.replies.map((_r, i) => ({ kind: 'replies' as const, key: m.id + ':' + i })),
+                    m.replies.map((_rp, i) => ({ kind: 'replies' as const, key: m.id + ':' + i })),
                   ),
                   user?.id || '',
                 );
@@ -155,8 +155,8 @@ export function TeamBoard() {
 
         {!messages.length && <Empty text="אין תגובות חדשות. אפשר להציג הכל." />}
         {messages.map((m) => {
-          const unreadCount = m.replies.filter(
-            (_r, i) => !isRead(db, 'replies', m.id + ':' + i),
+          const unreadCount = m.replies.filter((rp, i) =>
+            isUnread(db, 'replies', m.id + ':' + i, rp.date || m.date),
           ).length;
           return (
             <div key={m.id} style={{ padding: '18px 24px', borderBottom: `1px solid ${C.border}` }}>
@@ -201,7 +201,7 @@ export function TeamBoard() {
                       type="button"
                       onClick={() =>
                         void setReadMarks(
-                          m.replies.map((_r, i) => ({
+                          m.replies.map((_rp, i) => ({
                             kind: 'replies' as const,
                             key: m.id + ':' + i,
                           })),
@@ -235,7 +235,7 @@ export function TeamBoard() {
                 const who =
                   db.employees.find((e) => e.id === rp.by)?.name ||
                   (rp.by === db.manager.id ? db.manager.name : 'חבר/ת צוות');
-                const unread = !isRead(db, 'replies', m.id + ':' + i);
+                const unread = isUnread(db, 'replies', m.id + ':' + i, rp.date || m.date);
                 return (
                   <div key={i} style={{ display: 'flex', gap: 10, marginTop: 12 }}>
                     <span

@@ -535,11 +535,13 @@ export function Overview() {
                   style={{
                     width: 70,
                     fontSize: 12.5,
-                    fontWeight: 600,
-                    color: a.vsExp >= 0 ? C.success : C.danger,
+                    fontWeight: a.n ? 600 : 400,
+                    // No reports in range means no comparison to make — a green
+                    // +0% would read as "on target".
+                    color: !a.n ? C.muted : a.vsExp >= 0 ? C.success : C.danger,
                   }}
                 >
-                  {signed(a.vsExp)}
+                  {a.n ? signed(a.vsExp) : '—'}
                 </span>
                 <span style={{ width: 64, fontSize: 13.5 }}>{a.patel}</span>
                 <span style={{ width: 64, fontSize: 13.5 }}>{a.bot}</span>

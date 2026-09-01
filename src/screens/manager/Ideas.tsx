@@ -4,7 +4,7 @@ import { Card, Empty } from '@/ui/primitives';
 import { useDb } from '@/state/store';
 import { useUi } from '@/state/ui';
 import { useAuth } from '@/auth/AuthContext';
-import { isRead } from '@/domain/unread';
+import { isUnread } from '@/domain/unread';
 import { fmtFull } from '@/lib/date';
 import {
   publishTeamMessage,
@@ -30,12 +30,14 @@ export function Ideas() {
   const allIdeas = db.reports
     .filter((r) => r.idea)
     .sort((a, c) => (a.date < c.date ? 1 : -1));
-  const unreadIdeas = allIdeas.filter((r) => !isRead(db, 'ideas', r.id)).length;
-  const shownIdeas = allIdeas.filter((r) => !unreadOnly || !isRead(db, 'ideas', r.id));
+  const unreadIdeas = allIdeas.filter((r) => isUnread(db, 'ideas', r.id, r.date)).length;
+  const shownIdeas = allIdeas.filter((r) => !unreadOnly || isUnread(db, 'ideas', r.id, r.date));
   const items = shownIdeas.slice(0, 12);
 
   const allTaskNotes: {
     key: string;
+    /** 'YYYY-MM-DD', for the staleness rule. `date` below is the display form. */
+    rawDate: string;
     who: string;
     userId: string;
     task: string;
@@ -51,6 +53,7 @@ export function Ideas() {
         if (e?.on && e.note) {
           allTaskNotes.push({
             key: r.id + ':' + tid,
+            rawDate: r.date,
             who: db.employees.find((x) => x.id === r.userId)?.name || '',
             userId: r.userId,
             task: db.tasks.find((t) => t.id === tid)?.name || tid,
@@ -60,8 +63,8 @@ export function Ideas() {
         }
       });
     });
-  const unreadNotes = allTaskNotes.filter((n) => !isRead(db, 'taskNotes', n.key)).length;
-  const shownNotes = allTaskNotes.filter((n) => !unreadOnly || !isRead(db, 'taskNotes', n.key));
+  const unreadNotes = allTaskNotes.filter((n) => isUnread(db, 'taskNotes', n.key, n.rawDate)).length;
+  const shownNotes = allTaskNotes.filter((n) => !unreadOnly || isUnread(db, 'taskNotes', n.key, n.rawDate));
   const taskNotes = shownNotes.slice(0, noteLimit);
 
   // A keyword tally of what the ideas keep coming back to.
@@ -152,7 +155,7 @@ export function Ideas() {
             </div>
           )}
           {items.map((r) => {
-            const unread = !isRead(db, 'ideas', r.id);
+            const unread = isUnread(db, 'ideas', r.id, r.date);
             const who = r.ideaAnon
               ? 'אנונימי'
               : db.employees.find((e) => e.id === r.userId)?.name || 'עובד/ת';
@@ -319,7 +322,7 @@ export function Ideas() {
           </div>
           {!taskNotes.length && <Empty text="אין הערות חדשות." />}
           {taskNotes.map((n) => {
-            const unread = !isRead(db, 'taskNotes', n.key);
+            const unread = isUnread(db, 'taskNotes', n.key, n.rawDate);
             return (
               <div key={n.key} style={{ padding: '16px 24px', borderBottom: `1px solid ${C.border}` }}>
                 <div

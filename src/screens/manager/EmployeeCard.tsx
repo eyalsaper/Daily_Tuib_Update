@@ -21,10 +21,15 @@ export function EmployeeCard() {
   const { user } = useAuth();
   const [draft, setDraft] = useState('');
 
-  // Default to the first employee when the manager lands here directly.
+  // Landing here directly opens on whoever reported most recently — the users
+  // collection starts with dormant and test accounts, which would open empty.
   useEffect(() => {
-    if (!ui.mgrEmp && db.employees.length) ui.setMgrEmp(db.employees[0].id);
-  }, [db.employees, ui]);
+    if (ui.mgrEmp || !db.employees.length) return;
+    const latest = db.reports
+      .filter((r) => (r.hours || r.calls) && db.employees.some((e) => e.id === r.userId))
+      .sort((a, b) => (a.date < b.date ? 1 : -1))[0];
+    ui.setMgrEmp(latest?.userId || db.employees[0].id);
+  }, [db.employees, db.reports, ui]);
 
   const emp = db.employees.find((e) => e.id === ui.mgrEmp);
   const idx = db.employees.findIndex((e) => e.id === ui.mgrEmp);
