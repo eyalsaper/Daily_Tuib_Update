@@ -68,8 +68,15 @@ export function TasksAndTargets() {
   const scopeValues: HourlyTargets =
     tgtScope === 'team' ? db.targets.team : targetsFor(db, tgtEmp).values;
 
-  async function setTargetValue(key: keyof HourlyTargets, value: string) {
-    const next = { ...scopeValues, [key]: num(value) };
+  /**
+   * These values are overrides on top of the target set on the task itself.
+   * An emptied field REMOVES the override rather than saving a zero — a stored
+   * 0 reads as "zero per hour" and silently beats the task's own target.
+   */
+  async function setTargetValue(key: string, value: string) {
+    const next: HourlyTargets = { ...scopeValues };
+    if (value.trim() === '') delete next[key];
+    else next[key] = num(value);
     await saveTargets(tgtScope === 'team' ? 'team' : tgtEmp, next);
   }
 
@@ -863,8 +870,9 @@ export function TasksAndTargets() {
               <span style={{ flex: 1, fontSize: 13.5 }}>{label}</span>
               <input
                 type="number"
-                defaultValue={rateFor(db, tgtScope === 'team' ? 'team' : tgtEmp, t)}
-                key={key + tgtScope + tgtEmp + rateFor(db, tgtScope === 'team' ? 'team' : tgtEmp, t)}
+                defaultValue={scopeValues[key] ?? ''}
+                placeholder={String(t.perHour ?? 0)}
+                key={key + tgtScope + tgtEmp + (scopeValues[key] ?? '')}
                 onBlur={(e) => void setTargetValue(key, e.target.value)}
                 style={{
                   width: 70,
@@ -876,8 +884,8 @@ export function TasksAndTargets() {
                   background: 'none',
                 }}
               />
-              <span style={{ width: 96, fontSize: 12.5, color: C.muted, textAlign: 'end' }}>
-                {unit} לשעה
+              <span style={{ width: 150, fontSize: 12.5, color: C.muted, textAlign: 'end' }}>
+                {unit} לשעה · במשימה {t.perHour ?? 0}
               </span>
             </div>
             );
@@ -891,7 +899,7 @@ export function TasksAndTargets() {
             }}
           >
             <span style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.6, maxWidth: 230 }}>
-              עובד בלי יעד אישי מקבל אוטומטית את יעד הצוות.
+              שדה ריק = היעד שמוגדר במשימה עצמה. עובד בלי יעד אישי מקבל את יעד הצוות.
             </span>
             {tgtScope === 'emp' && (
               <button
