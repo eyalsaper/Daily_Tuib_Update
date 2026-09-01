@@ -7,7 +7,7 @@ import { useAuth } from '@/auth/AuthContext';
 import type { Report, Task, TaskEntry } from '@/types/models';
 import { fmtFull, today, yesterday } from '@/lib/date';
 import { num, r1 } from '@/lib/num';
-import { moodWord, targetsFor } from '@/domain/calc';
+import { hourlyTargetTasks, moodWord, rateFor } from '@/domain/calc';
 import { createReport, replaceReport, saveIdea, setIdeaReply } from '@/data/repo';
 import { setDoc } from 'firebase/firestore';
 import { docRef, uid } from '@/lib/firebase';
@@ -127,9 +127,6 @@ export function DailyReport() {
     setError(null);
   };
 
-  const targets = targetsFor(db, userId).values;
-  const hours = num(form.hours);
-
   const expected = useMemo(() => {
     let x = 0;
     Object.keys(form.tasks).forEach((tid) => {
@@ -156,10 +153,20 @@ export function DailyReport() {
     });
   });
 
-  const patelQty = num(form.tasks.patel?.nums[0]);
-  const botQty = num(form.tasks.bot?.nums[0]);
-  const patelGoal = Math.round(num(form.tasks.patel?.time) * targets.patel);
-  const botGoal = Math.round(num(form.tasks.bot?.time) * targets.bot);
+  // One row per task the manager gave an hourly target, measured against the
+  // hours entered for that task. Calls are measured against the expected total
+  // from the ticked tasks, not against a rate of their own.
+  const goalRows = hourlyTargetTasks(db).map((t) => {
+    const rate = rateFor(db, userId, t);
+    const e = form.tasks[t.id];
+    const qty = num(e?.nums[0]);
+    const goal = Math.round(num(e?.time) * rate);
+    return {
+      label: `${t.name} · ${rate} לשעה`,
+      value: `${qty} / ${goal}`,
+      good: goal > 0 && qty >= goal,
+    };
+  });
 
   function pickDate(date: string) {
     // `max` on the input only constrains the picker — a typed date sails past
@@ -545,7 +552,7 @@ export function DailyReport() {
                   </div>
                   <div style={{ padding: '4px 22px 16px 54px' }}>
                     {t.nums.map((label, i) => {
-                      const rate = targets[t.id] ?? t.perHour ?? 0;
+                      const rate = rateFor(db, userId, t);
                       const hint =
                         t.targetType === 'perHour'
                           ? `יעד: ${Math.round(num(e.time) * rate)} לפי ${rate} לשעה`
@@ -727,20 +734,11 @@ export function DailyReport() {
             <Card style={{ padding: '18px 20px' }}>
               <div style={{ fontSize: 14, fontWeight: 700 }}>היעדים שלך היום</div>
               {[
+                ...goalRows,
                 {
-                  label: `פטל · ${targets.patel} לשעה`,
-                  value: `${patelQty} / ${patelGoal}`,
-                  good: patelGoal > 0 && patelQty >= patelGoal,
-                },
-                {
-                  label: `בוט · ${targets.bot} לשעה`,
-                  value: `${botQty} / ${botGoal}`,
-                  good: botGoal > 0 && botQty >= botGoal,
-                },
-                {
-                  label: `שיחות · ${targets.calls} לשעה`,
-                  value: `${num(form.calls)} / ${Math.round(hours * targets.calls)}`,
-                  good: hours > 0 && num(form.calls) >= hours * targets.calls,
+                  label: 'שיחות · צפי לפי המשימות',
+                  value: `${num(form.calls)} / ${expected}`,
+                  good: expected > 0 && num(form.calls) >= expected,
                 },
                 {
                   label: 'איפוסים שסומנו',
@@ -767,7 +765,7 @@ export function DailyReport() {
                 </div>
               ))}
               <div style={{ fontSize: 11.5, color: C.muted, lineHeight: 1.65, marginTop: 10 }}>
-                היעדים מחושבים מהשעות שדיווחת.
+                היעדים מחושבים מהשעות שדיווחת ומהגדרות המשימות.
               </div>
             </Card>
           </div>

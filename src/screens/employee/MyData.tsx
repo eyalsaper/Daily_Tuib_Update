@@ -6,7 +6,7 @@ import { RangeBar } from '@/ui/RangeBar';
 import { useDb } from '@/state/store';
 import { useUi, useRangeState } from '@/state/ui';
 import { useAuth } from '@/auth/AuthContext';
-import { aggregate, barsFor, expectedFor, qtyOf, resetStats, targetsFor } from '@/domain/calc';
+import { aggregate, barsFor, expectedFor, hourlyTargetTasks, qtyOf, rateFor, resetStats, targetsFor } from '@/domain/calc';
 import { inRange, rangeLabel, unitLabel } from '@/domain/range';
 import { fmtFull, yesterday } from '@/lib/date';
 import { r1, signed } from '@/lib/num';
@@ -274,12 +274,9 @@ export function MyData() {
                     מה מצופה לכל שעת עבודה · לא צריך לדווח את זה
                   </div>
                 </div>
-                {[
-                  { label: 'פטל', v: tg.values.patel, unit: 'לשעה' },
-                  { label: 'בוט קולקטיבי', v: tg.values.bot, unit: 'לשעה' },
-                  { label: 'שיחות', v: tg.values.calls, unit: 'לשעה' },
-                  { label: 'משימות צוותים', v: tg.values.teams, unit: 'עסקים לשעה' },
-                ].map((g) => (
+                {hourlyTargetTasks(db).map((t) => {
+                  const g = { label: t.name, v: rateFor(db, userId, t), unit: 'לשעה' };
+                  return (
                   <div
                     key={g.label}
                     style={{
@@ -296,9 +293,15 @@ export function MyData() {
                       <span style={{ fontSize: 11.5, color: C.muted }}>{g.unit}</span>
                     </span>
                   </div>
-                ))}
+                  );
+                })}
+                {!hourlyTargetTasks(db).length && (
+                  <div style={{ padding: '12px 22px', fontSize: 13, color: C.muted }}>
+                    לא הוגדרו יעדים לשעה.
+                  </div>
+                )}
                 <div style={{ padding: '12px 22px', fontSize: 11.5, color: C.muted, lineHeight: 1.65 }}>
-                  משימות איפוס — אין יעד כמותי, רק לאפס.
+                  משימות איפוס — אין יעד כמותי, רק לאפס. השיחות נמדדות מול הצפי לפי המשימות.
                 </div>
               </Card>
 

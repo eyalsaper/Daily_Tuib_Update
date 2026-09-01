@@ -125,6 +125,23 @@ export function targetsFor(db: Db, userId: string): { values: HourlyTargets; per
   return { values: own || db.targets.team, personal: !!own };
 }
 
+/**
+ * The tasks that carry an hourly target, in the order the manager configured
+ * them. This is what drives every "יעדים לשעה" list: a task the manager set to
+ * "ללא יעד" disappears from all of them, and one given a per-hour target
+ * appears without any code change.
+ */
+export function hourlyTargetTasks(db: Db): Task[] {
+  return db.tasks.filter((t) => t.active && t.targetType === 'perHour');
+}
+
+/** Per-hour rate for a task: the employee's or team's override, else the task's own. */
+export function rateFor(db: Db, userId: string, task: Task): number {
+  const values = targetsFor(db, userId).values;
+  const override = values[task.id];
+  return num(override !== undefined ? override : (task.perHour ?? 0));
+}
+
 export interface Bar {
   h: string;
   fh: string;

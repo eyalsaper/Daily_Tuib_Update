@@ -4,7 +4,7 @@ import { Card, Pill, Toggle } from '@/ui/primitives';
 import { useDb } from '@/state/store';
 import { useUi, useRangeState } from '@/state/ui';
 import type { AlertConfig, HourlyTargets, Task } from '@/types/models';
-import { manualFor, targetsFor } from '@/domain/calc';
+import { hourlyTargetTasks, manualFor, rateFor, targetsFor } from '@/domain/calc';
 import { rangeBounds } from '@/domain/range';
 import { fmtShort } from '@/lib/date';
 import { num } from '@/lib/num';
@@ -825,14 +825,17 @@ export function TasksAndTargets() {
               {Object.keys(db.targets.byEmp).length} עם יעד אישי
             </span>
           </div>
-          {(
-            [
-              ['patel', 'פטל', 'פטל'],
-              ['bot', 'בוט קולקטיבי', 'בוט'],
-              ['calls', 'שיחות', 'שיחות'],
-              ['teams', 'משימות צוותים', 'עסקים'],
-            ] as const
-          ).map(([key, label, unit]) => (
+          {!hourlyTargetTasks(db).length && (
+            <div style={{ fontSize: 12.5, color: C.muted, padding: '12px 0', lineHeight: 1.7 }}>
+              אין משימה עם יעד לפי שעה. כדי להוסיף יעד, בחר/י משימה בטבלה למעלה ובחר/י "לפי שעה"
+              בשדה היעד.
+            </div>
+          )}
+          {hourlyTargetTasks(db).map((t) => {
+            const key = t.id;
+            const label = t.name;
+            const unit = t.name;
+            return (
             <div
               key={key}
               style={{
@@ -845,8 +848,8 @@ export function TasksAndTargets() {
               <span style={{ flex: 1, fontSize: 13.5 }}>{label}</span>
               <input
                 type="number"
-                defaultValue={scopeValues[key]}
-                key={key + tgtScope + tgtEmp + scopeValues[key]}
+                defaultValue={rateFor(db, tgtScope === 'team' ? 'team' : tgtEmp, t)}
+                key={key + tgtScope + tgtEmp + rateFor(db, tgtScope === 'team' ? 'team' : tgtEmp, t)}
                 onBlur={(e) => void setTargetValue(key, e.target.value)}
                 style={{
                   width: 70,
@@ -862,7 +865,8 @@ export function TasksAndTargets() {
                 {unit} לשעה
               </span>
             </div>
-          ))}
+            );
+          })}
           <div
             style={{
               display: 'flex',
