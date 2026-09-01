@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { C } from '@/ui/tokens';
 import { Avatar } from '@/ui/primitives';
 import { useAuth, AUTH_MODE } from '@/auth/AuthContext';
-import { useStore } from '@/state/store';
 
 /**
  * Login. The prototype logs you in by picking a name — that is demo behaviour.
@@ -11,7 +10,6 @@ import { useStore } from '@/state/store';
  */
 export function Login() {
   const { users, signIn, error, loading } = useAuth();
-  const { db } = useStore();
   const [picked, setPicked] = useState<string>('');
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -58,25 +56,20 @@ export function Login() {
         }}
       >
         <div style={{ background: C.brand, padding: '20px 44px 54px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <img src="/logo.png" alt="מידרג" style={{ height: 52, width: 'auto', display: 'block' }} />
-            <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,.88)' }}>תמיכה פנימית · 8080</span>
           </div>
           <div style={{ textAlign: 'center', marginTop: 40 }}>
             <div
               style={{
-                fontSize: 64,
+                fontSize: 52,
                 fontWeight: 800,
                 color: '#fff',
-                letterSpacing: '-.03em',
-                lineHeight: 1,
+                letterSpacing: '-.02em',
+                lineHeight: 1.1,
               }}
             >
-              {db.reports.filter((r) => r.hours || r.calls).length.toLocaleString('en-US')}
-            </div>
-            <div style={{ fontSize: 14.5, color: C.onBrandSoft, marginTop: 12 }}>
-              דיווחי יום נרשמו על ידי <strong style={{ fontWeight: 700 }}>{db.employees.length}</strong>{' '}
-              חברי צוות · סיכום יום · צוות טיוב
+              סיכום יום · טיוב
             </div>
           </div>
         </div>
